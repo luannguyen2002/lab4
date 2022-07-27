@@ -1,34 +1,35 @@
 var express = require('express');
+var fs = require('fs');
+var router = express.Router();
 const multer  = require('multer')
 // const e = require("express");
 // const upload = multer({ dest: 'uploads/' });
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + + Math.random() + file.originalname;
-    cb(null, uniqueSuffix);
-  },
-  // fileFilter: function (req, res, cb) {
-  //   if (file.length>100){
-  //     cb(null,true);
-  //   }
-  //   else  cb(null,false);
-  // },
-})
+    // quy định thư mục chứa file
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    // quy định tên file khi lưa trên server
+    filename: function (req, file, cb) {
+        var random = Math.random();
+        cb(null, random + Date.now() + file.originalname);
+    },
+});
+var upload2 = multer({
+    storage: storage, limits: {
+        // tùy chọn max size cho file
+        fileSize: 2 * 1024
+    }
+}).array('avatar',5);
 
-var upload = multer({ storage: storage,limits : {fileSize: 2 *1024 *1024}}).array('file',6);
-var router = express.Router();
+var upload = multer({ storage: storage,limit : {fileSize: 2 *1024 *1024}}).array('file',6);
+
 
 router.post('/dangky',upload,
     function (req, res,next) {
 
   upload(req,res,function (err) {
-    if (err=null){
-      res.send(err.message);
-    }
-    else{
+
       var email = req.body.email;
       var password = req.body.password;
       // var filename = req.file.originalname; //up 1 file
@@ -37,11 +38,14 @@ router.post('/dangky',upload,
       console.log(filename);
 
       res.send('Upload file Thanh công' + email);
-     }
   })
+
+
+
 
 })
 /* GET home page. */
+
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
@@ -87,5 +91,36 @@ router.get('/charts.ejs', function(req, res, next) {
 router.get('/tables.ejs', function(req, res, next) {
   res.render('tables.ejs', { title: 'Express' });
 });
+router.get('/upload.ejs', function (req, res, next) {
+    res.render('upload.ejs', {title: 'trạng thái'} );
+});
 
+router.post('/profilearray', function (req, res, next) {
+    upload2(req,res,function (err) {
+        if (err){
+            res.render('upload', {
+                title: err.message
+            });
+        }else {
+            var email = req.body.email;
+            var password = req.body.password;
+
+          var avatar = req.files.originalname;
+            var  urlAvatar = req.files.path;
+
+            res.render('upload', {
+                title: 'Upload thành công!!!!,' +
+                    ' kiểm tra thư mục uploads'
+                +email+''+password+''
+
+
+            });
+
+
+
+
+        }
+    })
+
+});
 module.exports = router;
